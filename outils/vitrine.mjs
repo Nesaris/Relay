@@ -23,10 +23,28 @@ await new Promise(r => http.createServer((req, res) => {
 const jeton = 'jeton-installation-de-la-vitrine-relay';
 const relay = await demarrer({ DATA_DIR: path.join(dossier, 'data'), PORT: String(port), HOTE: '127.0.0.1', RELAY_CADDY_SOCKET: socket, SOCLE_JETON_INSTALLATION: jeton, RELAY_HUB_TOKEN: 'jeton-du-hub-de-la-vitrine-0123456789', ...(process.env.SOCLE_THEME ? { SOCLE_THEME: process.env.SOCLE_THEME } : {}) }, { log: { info() {}, warn() {}, error() {} } });
 relay.magasin.poserReglage('general', { domaines: ['home.arpa', 'exemple.org'] });
-for (const r of [
+// PARCOURS_VITRINE=1 (captures de présentation) : des services qui répondent
+// vraiment (petits serveurs locaux), comme sur un réseau en bonne santé.
+const vitrine = process.env.PARCOURS_VITRINE === '1';
+const cibleLocale = async () => {
+  const s = http.createServer((req, res) => { res.writeHead(200, { 'content-type': 'text/plain' }); res.end('ok'); });
+  await new Promise(r => s.listen(0, '127.0.0.1', r));
+  return `127.0.0.1:${s.address().port}`;
+};
+const routes = vitrine ? [
+  { hote: 'mapmylan.home.arpa', cible: await cibleLocale(), mode: 'local', nom: 'MapMyLAN' },
+  { hote: 'console-de-la-salle-serveur.home.arpa', cible: await cibleLocale(), mode: 'local', nom: 'Console' },
+  { hote: 'cloud.exemple.org', cible: await cibleLocale(), mode: 'public', nom: 'Nextcloud' },
+  { hote: 'films.exemple.org', cible: await cibleLocale(), mode: 'clair', cf: true, nom: 'Jellyfin' },
+  { hote: 'maison.home.arpa', cible: await cibleLocale(), mode: 'local', nom: 'Home Assistant' },
+  { hote: 'graphes.home.arpa', cible: await cibleLocale(), mode: 'local', nom: 'Grafana' },
+  { hote: 'coffre.exemple.org', cible: await cibleLocale(), mode: 'public', nom: 'CODVAULT' },
+  { hote: 'statut.exemple.org', cible: 'hub-oracle:8090', mode: 'clair', cf: true, actif: false },
+] : [
   { hote: 'mapmylan.home.arpa', cible: 'hub-mapmylan:8090', mode: 'local', nom: 'MapMyLAN' },
   { hote: 'console-de-la-salle-serveur.home.arpa', cible: 'https://192.0.2.30:8443', mode: 'local', nom: 'Console' },
   { hote: 'statut.exemple.org', cible: 'hub-oracle:8090', mode: 'clair', cf: true, actif: false },
-]) await relay.relais.creer(r, { proprietaire: r.hote.startsWith('mapmylan') ? 'hub:mapmylan' : null });
+];
+for (const r of routes) await relay.relais.creer(r, { proprietaire: r.hote.startsWith('mapmylan') ? 'hub:mapmylan' : null });
 relay.magasin.creerClient('gestionnaire-de-conteneurs', 'routes');
 console.log(`Relay de démonstration sur http://localhost:${port} — jeton d’installation : ${jeton}`);
