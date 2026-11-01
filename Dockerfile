@@ -8,7 +8,7 @@
 #   relay-dns    : dnsmasq, pour que les noms servis par Relay mènent ici.
 # Image de base épinglée par empreinte (index multi-architecture amd64 +
 # arm64) : une étiquette peut être déplacée, une empreinte non.
-ARG NODE_IMAGE=node:24.21.0-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1
+ARG NODE_IMAGE=node:24.22.1-alpine@sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53
 # L'image de construction de Caddy aussi, et le module DNS à sa version.
 ARG CADDY_BUILDER=caddy:2.10.2-builder-alpine@sha256:4cff3ae272ea05842adb4546e35961e4947aeea65f80fa1eb62a35b960e84971
 
@@ -50,6 +50,9 @@ CMD ["run", "--resume"]
 # machine), le reste transmis. dnsmasq seul, sans root : le port 53 s'ouvre par
 # le sysctl net.ipv4.ip_unprivileged_port_start du conteneur (compose).
 FROM ${NODE_IMAGE} AS dns
+# Paquets du système à jour, et pas de npm, npx, corepack ni yarn : le service
+# n'a aucune dépendance npm, ils n'ont rien à faire dans l'image.
+RUN apk upgrade --no-cache && rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /opt/yarn-* /usr/local/bin/yarn /usr/local/bin/yarnpkg
 # /etc/relay-hosts : les noms que Relay y écrit (volume partagé, lu seul ici).
 RUN apk add --no-cache dnsmasq && addgroup -S -g 10003 dns && adduser -S -G dns -u 10003 -H -s /sbin/nologin dns \
  && mkdir -p /etc/relay-hosts && chown 10001:10001 /etc/relay-hosts && chmod 755 /etc/relay-hosts
@@ -58,6 +61,9 @@ EXPOSE 53/udp 53/tcp
 ENTRYPOINT ["dnsmasq", "--keep-in-foreground", "--log-facility=-", "--pid-file=", "--no-hosts", "--no-resolv", "--domain-needed", "--bogus-priv", "--cache-size=1000", "--hostsdir=/etc/relay-hosts", "--server=1.1.1.1", "--server=9.9.9.9"]
 
 FROM ${NODE_IMAGE} AS relay
+# Paquets du système à jour, et pas de npm, npx, corepack ni yarn : le service
+# n'a aucune dépendance npm, ils n'ont rien à faire dans l'image.
+RUN apk upgrade --no-cache && rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /opt/yarn-* /usr/local/bin/yarn /usr/local/bin/yarnpkg
 RUN apk add --no-cache tini \
  && addgroup -S -g 10001 relay && adduser -S -G relay -u 10001 -H -s /sbin/nologin relay \
  && mkdir -p /data /run/caddy /run/dns && chown relay:relay /data /run/dns && chmod 700 /data && chmod 755 /run/dns && chown 10002:10002 /run/caddy && chmod 755 /run/caddy
