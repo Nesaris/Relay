@@ -10,7 +10,7 @@
 # arm64) : une étiquette peut être déplacée, une empreinte non.
 ARG NODE_IMAGE=node:24.22.3-alpine@sha256:116b800c3754b440ee0aa3ed2f20f5bf3d99a554bfd9adeea09ea8017f6e85f5
 # L'image de construction de Caddy aussi, et le module DNS à sa version.
-ARG CADDY_BUILDER=caddy:2.10.2-builder-alpine@sha256:4cff3ae272ea05842adb4546e35961e4947aeea65f80fa1eb62a35b960e84971
+ARG CADDY_BUILDER=caddy:2.11.9-builder-alpine@sha256:86e132d1d6db8850352b2dbc15f82a4cb25363ac305ee41e11405873e5931f37
 
 # Caddy et son module DNS Cloudflare (certificats Let's Encrypt par le défi
 # DNS, pour les noms locaux d'un domaine chez Cloudflare), compilés depuis les

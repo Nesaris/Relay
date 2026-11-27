@@ -1,5 +1,12 @@
 [
   {
+    "version": "2.6.2",
+    "date": "2026-11-27",
+    "points": [
+      "Caddy 2.11.9 compilé ici avec son module DNS (failles hautes de Caddy 2.10 et de ses dépendances corrigées) ; la 2.6.1 n’avait pas pu être publiée."
+    ]
+  },
+  {
     "version": "2.6.1",
     "date": "2026-11-27",
     "points": [
