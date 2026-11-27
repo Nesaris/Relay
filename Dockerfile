@@ -20,6 +20,9 @@ ARG CADDY_BUILDER=caddy:2.11.9-builder-alpine@sha256:86e132d1d6db8850352b2dbc15f
 # modifié en route ne compile pas. Binaire statique, posé seul sur une image vide.
 FROM ${CADDY_BUILDER} AS caddy-binaire
 ARG CF_DNS_MODULE=github.com/caddy-dns/cloudflare@v0.2.4
+# Dépendances dont la version corrigée n'est pas encore celle de Caddy : forcées
+# ici (sommes vérifiées comme le reste), à retirer quand Caddy les reprend.
+ARG CADDY_REMPLACEMENTS="--replace github.com/klauspost/compress=github.com/klauspost/compress@v1.20.2 --replace golang.org/x/net=golang.org/x/net@v0.62.0"
 # XCADDY_SETCAP=0 : l'image de construction pose sinon une capacité de fichier
 # (cap_net_bind_service) sur le binaire, et le noyau refuse alors de le lancer
 # sous no-new-privileges (« exec /caddy: operation not permitted »). Les ports
@@ -27,7 +30,7 @@ ARG CF_DNS_MODULE=github.com/caddy-dns/cloudflare@v0.2.4
 # recopie le binaire sans ses attributs étendus : aucune capacité ne passe.
 ENV CGO_ENABLED=0 GOSUMDB=sum.golang.org XCADDY_SETCAP=0
 RUN set -eu; \
-    xcaddy build --output /tmp/caddy-construit --with "${CF_DNS_MODULE}"; \
+    xcaddy build --output /tmp/caddy-construit --with "${CF_DNS_MODULE}" ${CADDY_REMPLACEMENTS}; \
     install -m 0755 /tmp/caddy-construit /usr/local/bin/caddy; \
     /usr/local/bin/caddy list-modules | grep -qx 'dns.providers.cloudflare'; \
     /usr/local/bin/caddy list-modules --versions | grep 'dns.providers.cloudflare' || true; \

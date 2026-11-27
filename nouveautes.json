@@ -1,5 +1,12 @@
 [
   {
+    "version": "2.6.3",
+    "date": "2026-11-27",
+    "points": [
+      "Caddy : compression et réseau de Go forcés à leurs versions corrigées en attendant que Caddy les reprenne ; la 2.6.2 n’avait pas pu être publiée."
+    ]
+  },
+  {
     "version": "2.6.2",
     "date": "2026-11-27",
     "points": [
